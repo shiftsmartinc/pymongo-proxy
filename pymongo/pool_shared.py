@@ -20,6 +20,7 @@ import asyncio
 import collections
 import contextlib
 import functools
+import os
 import socket
 import ssl
 import sys
@@ -31,6 +32,9 @@ from typing import (
     Protocol,
     Union,
 )
+
+from python_socks._helpers import parse_proxy_url
+from python_socks.sync import Proxy
 
 from pymongo import _csot
 from pymongo.asynchronous.helpers import _getaddrinfo
@@ -283,9 +287,30 @@ async def _async_create_connection(address: _Address, options: PoolOptions) -> s
             _set_keepalive_times(sock)
             # Socket needs to be non-blocking during connection to not block the event loop
             sock.setblocking(False)
-            await asyncio.wait_for(
-                asyncio.get_running_loop().sock_connect(sock, sa), timeout=timeout
-            )
+            mongo_proxy = os.getenv("MONGO_PROXY")
+            if mongo_proxy:
+                # Same contract as the sync path / historical proxy fork: DNS for
+                # the Mongo host stays in PyMongo; python-socks only handles the
+                # proxy TCP handshake to dest_host/dest_port from getaddrinfo.
+                _, proxy_host, proxy_port, _, _ = parse_proxy_url(mongo_proxy)
+                await asyncio.wait_for(
+                    asyncio.get_running_loop().sock_connect(
+                        sock, (proxy_host, proxy_port)
+                    ),
+                    timeout=timeout,
+                )
+                # Proxy.from_url(...).connect is synchronous; briefly block.
+                sock.setblocking(True)
+                try:
+                    Proxy.from_url(mongo_proxy).connect(
+                        dest_host=sa[0], dest_port=sa[1], _socket=sock
+                    )
+                finally:
+                    sock.setblocking(False)
+            else:
+                await asyncio.wait_for(
+                    asyncio.get_running_loop().sock_connect(sock, sa), timeout=timeout
+                )
             sock.settimeout(timeout)
             return sock
         except asyncio.TimeoutError as e:
@@ -528,7 +553,21 @@ def _create_connection(address: _Address, options: PoolOptions) -> socket.socket
             sock.settimeout(timeout)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
             _set_keepalive_times(sock)
-            sock.connect(sa)
+            # Optional SOCKS/HTTP proxy for environments (e.g. Vertex) that cannot
+            # open a direct TCP path to MongoDB. Unset MONGO_PROXY keeps upstream
+            # behavior. API contract matches benjamintenny/mongo-python-driver-proxy:
+            # os.environ["MONGO_PROXY"] + stock MongoClient(uri).
+            mongo_proxy = os.getenv("MONGO_PROXY")
+            if mongo_proxy:
+                # Parse proxy's type, host, port etc.
+                _, proxy_host, proxy_port, _, _ = parse_proxy_url(mongo_proxy)
+                # Connect to proxy server
+                sock.connect((proxy_host, proxy_port))
+                # Connect to destination server through proxy
+                proxy = Proxy.from_url(mongo_proxy)
+                proxy.connect(dest_host=sa[0], dest_port=sa[1], _socket=sock)
+            else:
+                sock.connect(sa)
             return sock
         except OSError as e:
             err = e
