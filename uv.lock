@@ -1407,6 +1407,7 @@ name = "pymongo"
 source = { editable = "." }
 dependencies = [
     { name = "dnspython" },
+    { name = "python-socks" },
 ]
 
 [package.optional-dependencies]
@@ -1499,6 +1500,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.2" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.24.0" },
     { name = "python-snappy", marker = "extra == 'snappy'", specifier = ">=0.7.3" },
+    { name = "python-socks", specifier = "==2.7.1" },
     { name = "readthedocs-sphinx-search", marker = "extra == 'docs'", specifier = "~=0.3" },
     { name = "requests", marker = "extra == 'ocsp'", specifier = ">=2.23.0,<3.0" },
     { name = "service-identity", marker = "extra == 'ocsp'", specifier = ">=24.2.0" },
@@ -1638,6 +1640,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/39/66/9185fbb6605ba92716d9f77fbb13c97eb671cd13c3ad56bd154016fbf08b/python_snappy-0.7.3.tar.gz", hash = "sha256:40216c1badfb2d38ac781ecb162a1d0ec40f8ee9747e610bcfefdfa79486cee3", size = 9337, upload-time = "2024-08-29T13:16:05.705Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/86/c1/0ee413ddd639aebf22c85d6db39f136ccc10e6a4b4dd275a92b5c839de8d/python_snappy-0.7.3-py3-none-any.whl", hash = "sha256:074c0636cfcd97e7251330f428064050ac81a52c62ed884fc2ddebbb60ed7f50", size = 9155, upload-time = "2024-08-29T13:16:04.773Z" },
+]
+
+[[package]]
+name = "python-socks"
+version = "2.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/db/56/a21c65c9968fbdb442b177a4f6f42d150c4bc66c179606193ee86e5b5dc5/python_socks-2.7.1.tar.gz", hash = "sha256:f1a0bb603830fe81e332442eada96757b8f8dec02bd22d1d6f5c99a79704c550", size = 230371, upload-time = "2025-02-01T18:16:32.897Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/59/a5/8bc495f162f6ff6a805a0bd558312db2cc8d6aa6279324ba8180af64f777/python_socks-2.7.1-py3-none-any.whl", hash = "sha256:2603c6454eeaeb82b464ad705be188989e8cf1a4a16f0af3c921d6dd71a49cec", size = 54980, upload-time = "2025-02-01T18:16:30.232Z" },
 ]
 
 [[package]]
